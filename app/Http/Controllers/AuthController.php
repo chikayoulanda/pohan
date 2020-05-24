@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\BaseController as BaseController;
-use App\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+
+use App\Http\Controllers\BaseController as BaseController;
+
+use App\User;
+use App\Account;
 
 class AuthController extends BaseController
 {
@@ -17,18 +20,35 @@ class AuthController extends BaseController
             'email'     => 'required|email',
             'password'  => 'required',
             'c_password'=> 'required|same:password',
+            'firstname' => 'required',
+            'contact'   => 'required',  
         ]);
 
         if($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
 
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $user = User::create($input);
+        // $input = $request->all();
+        // $input['password'] = bcrypt($input['password']);
+        // $user = User::create($input);
 
-        $success['username'] = $user->username;
-        $success['token'] =  $user->createToken('Breakpoin Appliction')->accessToken;    
+        $user = new User;
+        $user->firstname = $request->input('firstname');
+        $user->lastname = $request->input('lastname');
+        $user->contact = $request->input('contact');
+        $user->role_id = 1;
+        $user->save();
+
+        $account = new Account;
+        $account->username = $request->input('username');
+        $account->email = $request->input('email');
+        $account->password = bcrypt($request->input('password'));
+        $account->user_id = $user->id;
+        $account->save();
+
+
+        $success['username'] = $account->username;
+        $success['token'] =  $account->createToken('Breakpoin Appliction')->accessToken;    
 
         return $this->sendResponse($success, 'User register successfulll.');
     }
